@@ -4,22 +4,15 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"fmt"
-	"gopkg.in/redis.v5"
 	"strconv"
+	"flag"
+	"github.com/go-redis/redis"
+	"os"
 )
 
-func createRedisConnection() *redis.Client {
-	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-	pong, err := client.Ping().Result()
-	fmt.Println(pong, err)
-	return client
-}
 
-func handler1(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
+
+func mainHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	rUrl := r.URL.Query().Get("url")
 	if rUrl == ""{
@@ -82,9 +75,23 @@ func handler1(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 }
 
 func main() {
-	conn := createRedisConnection()
+	redis_addr := flag.String("redis-address", "localhost:6379","redis host and port")
+	redis_pass := flag.String("redis-password", "","redis password")
+	redis_db := flag.Int("redis-db", 0,"redis db to use")
+
+	// Connect to redis
+	client := redis.NewClient(&redis.Options{
+		Addr:     *redis_addr,
+		Password: *redis_pass, // no password set
+		DB:       *redis_db,  // use default DB
+	})
+
+	if pong, err := client.Ping().Result(); err != nil {
+		fmt.Print(pong, err)
+		os.Exit(1)
+	}
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		handler1(w, r, conn)
+		mainHandler(w, r, client)
 	}
 
 	r := mux.NewRouter()

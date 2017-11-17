@@ -1,0 +1,6 @@
+package: github.com/nielsole/kudos
+import:
+- package: github.com/gorilla/mux
+  version: ~1.6.0
+- package: gopkg.in/redis.v5
+  version: ~6.7.3
