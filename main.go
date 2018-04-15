@@ -33,7 +33,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 		var err error
 		for{
 			println("Scanning...", cursor, kudos)
-			scanRes := conn.Scan(cursor,"*//" + domain + "/*", 100)
+			scanRes := conn.Scan(cursor,"*" + domain + "/*", 100)
 			keys, cursor, err = scanRes.Result()
 			if err != nil{
 				w.WriteHeader(http.StatusInternalServerError)
