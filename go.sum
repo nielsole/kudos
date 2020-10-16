@@ -1,0 +1,6 @@
+github.com/go-redis/redis v6.7.3+incompatible h1:zJOUjkJamxdyQUgScaiKuPjX3dHBNscNCGosHGqwDlQ=
+github.com/go-redis/redis v6.7.3+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
+github.com/gorilla/context v1.1.1/go.mod h1:kBGZzfjB9CEq2AlWe17Uuf7NDRt0dE0s8S51q0aT7Yg=
+github.com/gorilla/mux v1.6.0 h1:UykbtMB/w5No2LmE16gINgLj+r/vbziTgaoERQv6U+0=
+github.com/gorilla/mux v1.6.0/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
+gopkg.in/redis.v5 v5.2.10-0.20171101134730-d0f86971b5d6/go.mod h1:6gtv0/+A4iM08kdRfocWYB3bLX2tebpNtfKlFT6H4mY=

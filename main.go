@@ -1,29 +1,27 @@
 package main
 
 import (
+	"flag"
+	"fmt"
+	"github.com/go-redis/redis"
 	"github.com/gorilla/mux"
 	"net/http"
-	"fmt"
-	"strconv"
-	"flag"
-	"github.com/go-redis/redis"
 	"os"
+	"strconv"
 )
-
-
 
 func mainHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	rUrl := r.URL.Query().Get("url")
-	if rUrl == ""{
+	if rUrl == "" {
 		domain := r.URL.Query().Get("domain")
-		if domain == ""{
+		if domain == "" {
 			w.WriteHeader(400)
 			w.Write([]byte("Use either 'url' or 'domain' as GET parameters"))
 			return
 		}
 		//else
-		if r.Method != "GET"{
+		if r.Method != "GET" {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
@@ -31,25 +29,25 @@ func mainHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 		var keys []string
 		var cursor uint64 = 0
 		var err error
-		for{
+		for {
 			println("Scanning...", cursor, kudos)
-			scanRes := conn.Scan(cursor,"*" + domain + "/*", 100)
+			scanRes := conn.Scan(cursor, "*"+domain+"/*", 100)
 			keys, cursor, err = scanRes.Result()
-			if err != nil{
+			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			for _, key := range keys{
+			for _, key := range keys {
 				println("Retrieving individual url", key)
 				urlKudos, err1 := conn.Get(key).Result()
-				if err1 != nil{
+				if err1 != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
 				kudosIncr, _ := strconv.ParseUint(urlKudos, 10, 64)
 				kudos += kudosIncr
 			}
-			if cursor == 0{
+			if cursor == 0 {
 				break
 			}
 		}
@@ -75,19 +73,21 @@ func mainHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 }
 
 func main() {
-	redis_addr := flag.String("redis-address", "localhost:6379","redis host and port")
-	redis_pass := flag.String("redis-password", "","redis password")
-	redis_db := flag.Int("redis-db", 0,"redis db to use")
+	redis_pass := os.Getenv("REDIS_PASSWORD")
+	redis_addr := flag.String("redis-address", "localhost:6379", "redis host and port")
+	redis_pass = *flag.String("redis-password", redis_pass, "redis password")
+	listen_port := flag.String("port", ":8080", "Listening port")
+	redis_db := flag.Int("redis-db", 0, "redis db to use")
 
 	// Connect to redis
 	client := redis.NewClient(&redis.Options{
 		Addr:     *redis_addr,
-		Password: *redis_pass, // no password set
+		Password: redis_pass, // no password set
 		DB:       *redis_db,  // use default DB
 	})
 
 	if pong, err := client.Ping().Result(); err != nil {
-		fmt.Print(pong, err)
+		fmt.Println(pong, err)
 		os.Exit(1)
 	}
 	handler := func(w http.ResponseWriter, r *http.Request) {
@@ -97,9 +97,8 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", handler)
 	http.Handle("/", r)
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil{
+	err := http.ListenAndServe(*listen_port, nil)
+	if err != nil {
 		println(err)
 	}
-
 }
