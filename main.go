@@ -78,6 +78,7 @@ func main() {
 	redis_pass = *flag.String("redis-password", redis_pass, "redis password")
 	listen_port := flag.String("port", ":8080", "Listening port")
 	redis_db := flag.Int("redis-db", 0, "redis db to use")
+	flag.Parse()
 
 	// Connect to redis
 	client := redis.NewClient(&redis.Options{
