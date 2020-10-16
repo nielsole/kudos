@@ -1,0 +1,8 @@
+build_image:
+  tags:
+  - docker
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - /kaniko/executor --destination nielsole/kudos --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile
