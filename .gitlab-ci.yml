@@ -4,5 +4,8 @@ build_image:
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - export BASE64AUTH=$(echo "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" | base64); envsubst < docker-config.json > /kaniko/.docker/config.json
   script:
-    - /kaniko/executor --destination nielsole/kudos --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile
+    - /kaniko/executor --destination $CI_REGISTRY/group/project/image:latest --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile

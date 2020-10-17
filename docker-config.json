@@ -1,0 +1,7 @@
+{
+	"auths": {
+		"${CI_REGISTRY}": {
+			"auth": "${BASE64AUTH}"
+		}
+	}
+}
