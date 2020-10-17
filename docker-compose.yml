@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis
+    volumes:
+      - ./data:/data
+  kudos:
+    image: registry.gitlab.com/nielsole/kudos/kudos
+    command:
+      - -redis-address
+      - redis:6379
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
