@@ -1,16 +1,21 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
-	"github.com/go-redis/redis"
-	"github.com/gorilla/mux"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
+
+	redis "github.com/go-redis/redis/v8"
+	"github.com/gorilla/mux"
 )
 
 func mainHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancelFunc()
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	rUrl := r.URL.Query().Get("url")
 	if rUrl == "" {
@@ -31,7 +36,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 		var err error
 		for {
 			println("Scanning...", cursor, kudos)
-			scanRes := conn.Scan(cursor, "*"+domain+"/*", 100)
+			scanRes := conn.Scan(ctx, cursor, "*"+domain+"/*", 100)
 			keys, cursor, err = scanRes.Result()
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -39,7 +44,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 			}
 			for _, key := range keys {
 				println("Retrieving individual url", key)
-				urlKudos, err1 := conn.Get(key).Result()
+				urlKudos, err1 := conn.Get(ctx, key).Result()
 				if err1 != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					return
@@ -56,7 +61,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 	}
 	if r.Method == "GET" {
 		//counter.count++
-		counter, err := conn.Get(rUrl).Result()
+		counter, err := conn.Get(ctx, rUrl).Result()
 		if err == redis.Nil {
 			counter = "0"
 		} else if err != nil {
@@ -64,7 +69,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 		}
 		w.Write([]byte(counter))
 	} else {
-		counter, err := conn.Incr(rUrl).Result()
+		counter, err := conn.Incr(ctx, rUrl).Result()
 		if err != nil {
 			println(err)
 		}
@@ -87,7 +92,10 @@ func main() {
 		DB:       *redis_db,  // use default DB
 	})
 
-	if pong, err := client.Ping().Result(); err != nil {
+	ctx := context.Background()
+	ping_ctx, _ := context.WithTimeout(ctx, 1*time.Second)
+
+	if pong, err := client.Ping(ping_ctx).Result(); err != nil {
 		fmt.Println(pong, err)
 		os.Exit(1)
 	}
