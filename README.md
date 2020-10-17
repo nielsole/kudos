@@ -23,7 +23,9 @@ Kudos requires a redis database that stores the state.
 
 ### Docker
 
-nielsole/kudos
+```
+registry.gitlab.com/nielsole/kudos/kudos
+```
 
 ### From source
 
