@@ -27,7 +27,7 @@ promote_image:
   image:
     name: docker
   before_script:
-    - mkdir -p /kaniko/.docker
+    - mkdir -p $HOME/.docker
     - echo $DOCKER_AUTH > $HOME/.docker/config.json
   script:
     - docker pull $CI_REGISTRY/nielsole/kudos/kudos:$CI_COMMIT_SHA
