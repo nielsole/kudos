@@ -1,6 +1,7 @@
 stages:
 - test
 - build
+- promote
 
 build_image:
   tags:
@@ -13,7 +14,27 @@ build_image:
     - mkdir -p /kaniko/.docker
     - echo $DOCKER_AUTH > /kaniko/.docker/config.json
   script:
-    - /kaniko/executor --destination $CI_REGISTRY/nielsole/kudos/kudos:latest --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile
+    - /kaniko/executor --destination $CI_REGISTRY/nielsole/kudos/kudos:$CI_COMMIT_SHA --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile
+
+promote_image:
+  tags:
+  - docker
+  stage: promote
+  only:
+    refs:
+      - master
+      - tags
+  image:
+    name: docker
+  before_script:
+    - mkdir -p /kaniko/.docker
+    - echo $DOCKER_AUTH > $HOME/.docker/config.json
+  script:
+    - docker pull $CI_REGISTRY/nielsole/kudos/kudos:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY/nielsole/kudos/kudos:$CI_COMMIT_SHA $CI_REGISTRY/nielsole/kudos/kudos:latest
+    - docker push $CI_REGISTRY/nielsole/kudos/kudos:latest
+    - docker tag $CI_REGISTRY/nielsole/kudos/kudos:$CI_COMMIT_SHA $CI_REGISTRY/nielsole/kudos/kudos:$CI_COMMIT_REF_NAME
+    - docker push $CI_REGISTRY/nielsole/kudos/kudos:$CI_COMMIT_REF_NAME
 
 format:
   tags:
