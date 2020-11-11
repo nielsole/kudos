@@ -28,12 +28,13 @@ func main() {
 	})
 
 	ctx := context.Background()
-	ping_ctx, _ := context.WithTimeout(ctx, 1*time.Second)
+	ping_ctx, ping_cancel := context.WithTimeout(ctx, 1*time.Second)
 
 	if pong, err := client.Ping(ping_ctx).Result(); err != nil {
 		fmt.Println(pong, err)
 		os.Exit(1)
 	}
+	ping_cancel()
 
 	// TODO Pass redis client via context
 	handler := func(handler func(w http.ResponseWriter, r *http.Request, client *redis.Client)) func(w http.ResponseWriter, r *http.Request) {
