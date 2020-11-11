@@ -1,6 +1,11 @@
+stages:
+- test
+- build
+
 build_image:
   tags:
   - docker
+  stage: build
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -9,3 +14,13 @@ build_image:
     - echo $DOCKER_AUTH > /kaniko/.docker/config.json
   script:
     - /kaniko/executor --destination $CI_REGISTRY/nielsole/kudos/kudos:latest --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile
+
+format:
+  tags:
+  - docker
+  stage: test
+  image:
+    name: golang:1.15-alpine
+    entrypoint: [""]
+  script:
+    - gofmt -d -e .
