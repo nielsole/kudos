@@ -17,6 +17,8 @@ build_image:
     - /kaniko/executor --destination $CI_REGISTRY/nielsole/kudos/kudos:$CI_COMMIT_SHA --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile
 
 promote_image:
+  services:
+  - docker:dind
   tags:
   - docker
   - gce
