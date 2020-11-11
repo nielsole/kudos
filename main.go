@@ -23,8 +23,8 @@ func main() {
 	// Connect to redis
 	client := redis.NewClient(&redis.Options{
 		Addr:     *redis_addr,
-		Password: redis_pass, // no password set
-		DB:       *redis_db,  // use default DB
+		Password: redis_pass,
+		DB:       *redis_db,
 	})
 
 	ctx := context.Background()
@@ -36,7 +36,6 @@ func main() {
 	}
 	ping_cancel()
 
-	// TODO Pass redis client via context
 	handler := func(handler func(w http.ResponseWriter, r *http.Request, client *redis.Client)) func(w http.ResponseWriter, r *http.Request) {
 		return func(w http.ResponseWriter, r *http.Request) {
 			handler(w, r, client)
