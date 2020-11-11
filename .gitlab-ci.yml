@@ -19,13 +19,13 @@ build_image:
 promote_image:
   tags:
   - docker
+  - gce
   stage: promote
   only:
     refs:
       - master
       - tags
-  image:
-    name: docker
+  image: docker
   before_script:
     - mkdir -p $HOME/.docker
     - echo $DOCKER_AUTH > $HOME/.docker/config.json
