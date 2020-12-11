@@ -1,12 +1,36 @@
-# kudos
+# Kudos - A simple like button that can be self-hosted
 
-Kudos is similar to a like. Just as you can add a like button at the bottom of a blog post, you can add a kudos button at the bottom of a blog post.
+![A circle with a number below it](./static/kudos.png)
 
-I really liked  http://kudosplease.com/ but their backend was really slow making it unusable, so I wrote my own.
-
-I also host this little piece of software and you can use it free of charge: [blog post](https://www.niels-ole.com/kudos/blog/2016/11/04/now-with-kudos.html).
+Kudos is similar to a like. By simply hovering over the button for a couple of seconds, a counter is inreased.
+[Example](https://www.niels-ole.com/kudos/blog/2016/11/04/now-with-kudos.html)
 
 ## Usage
+
+1. Download `kudosplease.min.js` and `kudosplease.css` from the `frontend` folder
+2. Embed CSS and JS on your website
+   ```
+   <script src="kudosplease-min.js"></script>
+   <link rel="stylesheet" href="kudosplease-min.css">
+   ```
+3. Create the JS object:
+   ```
+   new KudosPlease({
+    el : '.kudos',
+    duration : 1500,
+    persistent : true,
+    status : {
+      alpha: 'fontelico-emo-shoot',
+      beta: 'fontelico-emo-shoot',
+      gamma: 'fontelico-emo-beer'
+    }
+   });
+   ```
+
+
+## Self-Hosting
+
+You need to change the API endpoint stored int the JavaScript. Simply search kudosplease.min.js for `kudos.niels-ole.com` and replace it with your API endpoint.
 
 Kudos requires a redis database that stores the state.
 
@@ -33,3 +57,8 @@ registry.gitlab.com/nielsole/kudos/kudos
 go build main.go
 ```
 
+## Contributors / History
+
+I really liked  http://kudosplease.com/ but their backend was really slow making it unusable, so I wrote my own.
+
+Thanks to [Tim Pietrusky](https://github.com/TimPietrusky/) for creating kudos and publishing it under OSS.
