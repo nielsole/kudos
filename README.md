@@ -13,7 +13,8 @@ Kudos is similar to a like. By simply hovering over the button for a couple of s
    <script src="kudosplease-min.js"></script>
    <link rel="stylesheet" href="kudosplease-min.css">
    ```
-3. Create the JS object:
+3. Create the widget: `<div class="kudos" data-amount="0" data-url="example.com/my-awesome-article"></div>`
+4. Create the JS object:
    ```
    new KudosPlease({
     el : '.kudos',
