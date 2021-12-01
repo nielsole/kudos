@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"time"
 
@@ -50,6 +51,7 @@ func main() {
 
 	mr := mux.NewRouter()
 	mr.HandleFunc("/metrics", handler(getMetrics)).Methods("GET")
+	http.Handle("/", mr)
 	go http.ListenAndServe(*metrics_listen_port, nil)
 
 	r := mux.NewRouter()
@@ -58,8 +60,13 @@ func main() {
 	r.HandleFunc("/", handler(getKudosHandler)).Methods("GET")
 	r.HandleFunc("/", handler(incKudosHandler)).Methods("POST")
 
-	http.Handle("/", r)
-	err := http.ListenAndServe(*listen_port, nil)
+	serveMux := http.NewServeMux()
+	serveMux.Handle("/", r)
+	server := &http.Server{
+		Addr:    *listen_port,
+		Handler: serveMux,
+	}
+	err := server.ListenAndServe()
 	if err != nil {
 		println(err)
 	}
