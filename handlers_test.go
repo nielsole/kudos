@@ -1,4 +1,5 @@
 package main
+
 import (
 	"context"
 	"testing"
@@ -31,7 +32,7 @@ func TestRedisIntegration(t *testing.T) {
 	if count := getDomainCount(context.Background(), "exámple.com", client); count != "0" {
 		t.Error("Unexpected domain count", count)
 	}
-	if count := getDomainCount(context.Background(), "", client); count != "2" {
+	if count := getDomainCount(context.Background(), "", client); count != "0" {
 		t.Error("Unexpected domain count", count)
 	}
 }

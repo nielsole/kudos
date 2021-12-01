@@ -30,6 +30,7 @@ func getUrlCount(ctx context.Context, rUrl string, conn *redis.Client) string {
 	return counter
 }
 
+// Returns the sum of all kudos counters for the domain and its subdomains.
 func getDomainCount(ctx context.Context, domain string, conn *redis.Client) string {
 	kudos := int64(0)
 	var keys []string
@@ -37,8 +38,11 @@ func getDomainCount(ctx context.Context, domain string, conn *redis.Client) stri
 	var err error
 	for {
 		println("Scanning...", cursor, kudos)
-		// TODO this matches any domain with the same prefix.
-		// Of course we only want actual domains to match, so we would need to parse the keys coming from redis before counting them.
+		// TODO This matches all of:
+		// * foo-domain
+		// * foo.domain
+		// * domain
+		// but we only want to match the last two.
 		scanRes := conn.Scan(ctx, cursor, "*"+domain+"/*", 100)
 		keys, cursor, err = scanRes.Result()
 		if err != nil {
@@ -46,6 +50,12 @@ func getDomainCount(ctx context.Context, domain string, conn *redis.Client) stri
 			return "0"
 		}
 		for _, key := range keys {
+			urlObject, err := url.Parse(key)
+			if err == nil {
+				if !isSubdomainOf(urlObject.Host, domain) {
+					continue
+				}
+			}
 			println("Retrieving individual url", key)
 			urlKudos, error_url_redis := conn.Get(ctx, key).Result()
 			if error_url_redis != nil {
