@@ -35,9 +35,10 @@ func get_redis_conn(redis_addr string, redis_pass string, redis_db int) *redis.C
 func main() {
 	redis_pass := os.Getenv("REDIS_PASSWORD")
 	redis_addr := flag.String("redis-address", "localhost:6379", "redis host and port")
+	// This inconsistency is introduced by using value based reference for redis_pass
 	redis_pass = *flag.String("redis-password", redis_pass, "redis password")
 	listen_port := flag.String("port", ":8080", "Listening port")
-	metrics_listen_port := flag.String("metrics-port", ":8081", "Prometheus metrics listen port")
+	admin_listen_port := flag.String("admin-port", ":8081", "Admin listen port; Provides metrics and debugging")
 	redis_db := flag.Int("redis-db", 0, "redis db to use")
 	flag.Parse()
 
@@ -52,7 +53,8 @@ func main() {
 	mr := mux.NewRouter()
 	mr.HandleFunc("/metrics", handler(getMetrics)).Methods("GET")
 	http.Handle("/", mr)
-	go http.ListenAndServe(*metrics_listen_port, nil)
+	// Default ServeMux includes pprof as side-effect of the import.
+	go http.ListenAndServe(*admin_listen_port, nil)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/getclaps", handler(getClapsHandler)).Methods("GET")

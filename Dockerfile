@@ -1,4 +1,4 @@
-FROM golang:1.15-alpine as build
+FROM golang:1.17.3 as build
 WORKDIR /build
 ADD . .
 RUN CGO_ENABLED=0 go build -o kudos .
