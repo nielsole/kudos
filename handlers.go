@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
-	"net/http"
-	"strconv"
-	"time"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
 
 	redis "github.com/go-redis/redis/v8"
 )
@@ -77,8 +79,13 @@ func getMetrics(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 			if error_url_redis != nil {
 				println("Could not retrieve key: ", key)
 			}
+			u, err := url.Parse(key)
+			domain := ""
+			if err == nil {
+				domain = u.Host
+			}
 			kudos, _ := strconv.ParseInt(urlKudos, 10, 64)
-			w.Write([]byte(fmt.Sprintf("kudos{url=\"%s\"} %d\n", key, kudos)))
+			w.Write([]byte(fmt.Sprintf("kudos{url=\"%s\",domain=\"%s\"} %d\n", strings.ReplaceAll(key, "\"", "\\\""), domain, kudos)))
 		}
 		if cursor == 0 {
 			break
