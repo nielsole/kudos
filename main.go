@@ -12,19 +12,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func main() {
-	redis_pass := os.Getenv("REDIS_PASSWORD")
-	redis_addr := flag.String("redis-address", "localhost:6379", "redis host and port")
-	redis_pass = *flag.String("redis-password", redis_pass, "redis password")
-	listen_port := flag.String("port", ":8080", "Listening port")
-	redis_db := flag.Int("redis-db", 0, "redis db to use")
-	flag.Parse()
-
+func get_redis_conn(redis_addr string, redis_pass string, redis_db int) *redis.Client {
 	// Connect to redis
 	client := redis.NewClient(&redis.Options{
-		Addr:     *redis_addr,
+		Addr:     redis_addr,
 		Password: redis_pass,
-		DB:       *redis_db,
+		DB:       redis_db,
 	})
 
 	ctx := context.Background()
@@ -35,12 +28,29 @@ func main() {
 		os.Exit(1)
 	}
 	ping_cancel()
+	return client
+}
+
+func main() {
+	redis_pass := os.Getenv("REDIS_PASSWORD")
+	redis_addr := flag.String("redis-address", "localhost:6379", "redis host and port")
+	redis_pass = *flag.String("redis-password", redis_pass, "redis password")
+	listen_port := flag.String("port", ":8080", "Listening port")
+	metrics_listen_port := flag.String("metrics-port", ":8081", "Prometheus metrics listen port")
+	redis_db := flag.Int("redis-db", 0, "redis db to use")
+	flag.Parse()
+
+	client := get_redis_conn(*redis_addr, redis_pass, *redis_db)
 
 	handler := func(handler func(w http.ResponseWriter, r *http.Request, client *redis.Client)) func(w http.ResponseWriter, r *http.Request) {
 		return func(w http.ResponseWriter, r *http.Request) {
 			handler(w, r, client)
 		}
 	}
+
+	mr := mux.NewRouter()
+	mr.HandleFunc("/metrics", handler(getMetrics)).Methods("GET")
+	go http.ListenAndServe(*metrics_listen_port, nil)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/getclaps", handler(getClapsHandler)).Methods("GET")

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"fmt"
 
 	redis "github.com/go-redis/redis/v8"
 )
@@ -56,6 +57,35 @@ func getDomainCount(ctx context.Context, domain string, conn *redis.Client) stri
 		}
 	}
 	return strconv.FormatInt(kudos, 10)
+}
+
+func getMetrics(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 10000*time.Millisecond)
+	defer cancelFunc()
+	var keys []string
+	var cursor uint64 = 0
+	var err error
+	scanRes := conn.Scan(ctx, cursor, "*", 100)
+	keys, cursor, err = scanRes.Result()
+	for {
+		if err != nil {
+			println("Error during scanning: ", err)
+		}
+		for _, key := range keys {
+			println("Retrieving individual url", key)
+			urlKudos, error_url_redis := conn.Get(ctx, key).Result()
+			if error_url_redis != nil {
+				println("Could not retrieve key: ", key)
+			}
+			kudos, _ := strconv.ParseInt(urlKudos, 10, 64)
+			w.Write([]byte(fmt.Sprintf("kudos{url=\"%s\"} %d\n", key, kudos)))
+		}
+		if cursor == 0 {
+			break
+		}
+		scanRes := conn.Scan(ctx, cursor, "*", 100)
+		keys, cursor, err = scanRes.Result()
+	}
 }
 
 func getClapsHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
