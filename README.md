@@ -35,6 +35,8 @@ You need to change the API endpoint stored int the JavaScript. Simply search kud
 
 Kudos requires a redis database that stores the state.
 
+Building the binary is easy: `go build -o kudos .`
+
 ```
 Usage of ./kudos:
   -admin-port string

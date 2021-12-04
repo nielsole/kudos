@@ -13,7 +13,7 @@
         <h1>Kudos - Simple Self-Hostable Like button</h1>
         <div class="kudos" data-amount="0" data-url="www.niels-ole.com/kudos/blog/2016/11/04/now-with-kudos.html"></div>
         <h2>Quickstart</h2>
-        <p>1. Load the <a href="https://github.com/nielsole/kudos/tree/master/frontend">JS and CSS files</a></p>
+        <p>1. Download the <a href="https://github.com/nielsole/kudos/tree/master/frontend">JS and CSS files</a></p>
         <p>2. Embed them in your website</p>
         <pre><!--
             <script src="kudosplease.min.js"></script>
@@ -22,11 +22,11 @@
 &lt;script src=&quot;kudosplease.min.js&quot;&gt;&lt;/script&gt;
 &lt;link rel=&quot;stylesheet&quot; href=&quot;kudosplease.css&quot;&gt;
         </code></pre>
-        <p>3. Create the like button at the position you like</p>
+        <p>3. Create the kudos button at the position you like and replace the <code>data-url</code> with the URL of your page.</p>
         <pre><!--
-            <div class="kudos" data-amount="0" data-url="example.com/my-awesome-article"></div>
+            <div class="kudos" data-amount="0" data-url="https://www.example.com/my-awesome-article"></div>
             --><code>
-&lt;div class=&quot;kudos&quot; data-amount=&quot;0&quot; data-url=&quot;example.com/my-awesome-article&quot;&gt;&lt;/div&gt;
+&lt;div class=&quot;kudos&quot; data-amount=&quot;0&quot; data-url=&quot;https://www.example.com/my-awesome-article&quot;&gt;&lt;/div&gt;
         </code></pre>
         <p>4. Create the Javascript object</p>
         <!--
@@ -55,7 +55,10 @@ new KudosPlease({
     }
 });
 &lt;/script&gt;</code></pre>
-        <p>5. If you want to self-host the backend, check out the instructions in the <a href="https://github.com/nielsole/kudos/#self-hosting">README</a></p>
+        <p>5. If you want to self-host the backend, check out the instructions in the <a href="https://github.com/nielsole/kudos/#self-hosting">README</a> on Github</p>
+        <h2>Terms of Use</h2>
+        <p>This is a hobby project and is provided free of charge without any guarantees. Please refrain from any sort of automated liking.</p>
+        <a href="https://www.niels-ole.com/imprint/">Imprint</a>
     </main>
   </body>
   <script src="kudosplease.min.js"></script>
