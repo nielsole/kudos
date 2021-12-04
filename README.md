@@ -5,7 +5,7 @@
 Kudos is similar to a like. By simply hovering over the button for a couple of seconds, a counter is inreased.
 [Example](https://www.niels-ole.com/kudos/blog/2016/11/04/now-with-kudos.html)
 
-## Usage
+## Quickstart
 
 1. Download `kudosplease.min.js` and `kudosplease.css` from the `frontend` folder
 2. Embed CSS and JS on your website
@@ -36,6 +36,9 @@ You need to change the API endpoint stored int the JavaScript. Simply search kud
 Kudos requires a redis database that stores the state.
 
 ```
+Usage of ./kudos:
+  -admin-port string
+        Admin listen port; Provides metrics and debugging (default ":8081")
   -port string
         Listening port (default ":8080")
   -redis-address string
@@ -63,3 +66,7 @@ go build main.go
 I really liked  http://kudosplease.com/ but their backend was really slow making it unusable, so I wrote my own.
 
 Thanks to [Tim Pietrusky](https://github.com/TimPietrusky/) for creating kudos and publishing it under OSS.
+
+## Roadmap / Ideas
+
+* Ensure compatibility with different frontends for example [Get Claps](https://getclaps.app/) whose frontend is even closer to a like button.

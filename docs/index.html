@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Kudos - Simple Self-Hostable Like button</title>
+    <link rel="stylesheet" href="kudosplease.css">
+    <link rel="stylesheet" href="pico.min.css">
+  </head>
+  <body>
+    <main class="container">
+        <h1>Kudos - Simple Self-Hostable Like button</h1>
+        <div class="kudos" data-amount="0" data-url="www.niels-ole.com/kudos/blog/2016/11/04/now-with-kudos.html"></div>
+        <h2>Quickstart</h2>
+        <p>1. Load the <a href="https://github.com/nielsole/kudos/tree/master/frontend">JS and CSS files</a></p>
+        <p>2. Embed them in your website</p>
+        <pre><!--
+            <script src="kudosplease.min.js"></script>
+            <link rel="stylesheet" href="kudosplease.css">
+            --><code>
+&lt;script src=&quot;kudosplease.min.js&quot;&gt;&lt;/script&gt;
+&lt;link rel=&quot;stylesheet&quot; href=&quot;kudosplease.css&quot;&gt;
+        </code></pre>
+        <p>3. Create the like button at the position you like</p>
+        <pre><!--
+            <div class="kudos" data-amount="0" data-url="example.com/my-awesome-article"></div>
+            --><code>
+&lt;div class=&quot;kudos&quot; data-amount=&quot;0&quot; data-url=&quot;example.com/my-awesome-article&quot;&gt;&lt;/div&gt;
+        </code></pre>
+        <p>4. Create the Javascript object</p>
+        <!--
+<script>
+new KudosPlease({
+ el : '.kudos',
+ duration : 1500,
+ persistent : true,
+ status : {
+   alpha: 'fontelico-emo-shoot',
+   beta: 'fontelico-emo-shoot',
+   gamma: 'fontelico-emo-beer'
+ }
+});
+</script>
+        -->
+        <pre><code>&lt;script&gt;
+new KudosPlease({
+    el : '.kudos',
+    duration : 1500,
+    persistent : true,
+    status : {
+    alpha: 'fontelico-emo-shoot',
+    beta: 'fontelico-emo-shoot',
+    gamma: 'fontelico-emo-beer'
+    }
+});
+&lt;/script&gt;</code></pre>
+        <p>5. If you want to self-host the backend, check out the instructions in the <a href="https://github.com/nielsole/kudos/#self-hosting">README</a></p>
+    </main>
+  </body>
+  <script src="kudosplease.min.js"></script>
+  <script>
+    new KudosPlease({
+        el : '.kudos',
+        duration : 1500,
+        persistent : true,
+        status : {
+        alpha: 'fontelico-emo-shoot',
+        beta: 'fontelico-emo-shoot',
+        gamma: 'fontelico-emo-beer'
+        }
+    });
+    </script>
+</html>
