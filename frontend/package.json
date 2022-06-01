@@ -1,0 +1,29 @@
+{
+  "name": "kudos",
+  "version": "1.0.0",
+  "description": "A fast, simple and self-hosted like button",
+  "main": "bundle.sh",
+  "dependencies": {},
+  "devDependencies": {
+    "minify": "~8.0.0",
+    "sass": "~1.52.1"
+  },
+  "scripts": {
+    "test": "./bundle.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nielsole/kudos.git"
+  },
+  "keywords": [
+    "kudos",
+    "like-button",
+    "self-hosted"
+  ],
+  "author": "Niels-Ole Lambertz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nielsole/kudos/issues"
+  },
+  "homepage": "https://github.com/nielsole/kudos#readme"
+}
