@@ -131,6 +131,7 @@ func getKudosHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client)
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancelFunc()
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
 	var count string
 	rUrl := r.URL.Query().Get("url")
 	if rUrl != "" {
