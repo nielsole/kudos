@@ -3,12 +3,46 @@ stages:
 - build
 - promote
 
+format:
+  tags:
+  - docker
+  stage: test
+  image:
+    name: golang:1.23-alpine
+    entrypoint: [""]
+  script:
+    - gofmt -d -e .
+
+unit_test:
+  tags:
+  - docker
+  stage: test
+  image:
+    name: golang:1.23-alpine
+    entrypoint: [""]
+  services:
+    - redis:alpine
+  variables:
+    REDIS_ADDRESS: "redis:6379"
+  script:
+    - go test ./...
+
+lint:
+  tags:
+  - docker
+  stage: test
+  image:
+    name: golangci/golangci-lint:v1.62-alpine
+    entrypoint: [""]
+  script:
+    - golangci-lint run
+
 build_image:
   tags:
   - docker
   stage: build
   image:
-    name: gcr.io/kaniko-project/executor:debug
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
     entrypoint: [""]
   before_script:
     - mkdir -p /kaniko/.docker
@@ -37,13 +71,3 @@ promote_image:
     - docker push $CI_REGISTRY/nielsole/kudos/kudos:latest
     - docker tag $CI_REGISTRY/nielsole/kudos/kudos:$CI_COMMIT_SHA $CI_REGISTRY/nielsole/kudos/kudos:$CI_COMMIT_REF_NAME
     - docker push $CI_REGISTRY/nielsole/kudos/kudos:$CI_COMMIT_REF_NAME
-
-format:
-  tags:
-  - docker
-  stage: test
-  image:
-    name: golang:1.15-alpine
-    entrypoint: [""]
-  script:
-    - gofmt -d -e .

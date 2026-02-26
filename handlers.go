@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -12,20 +13,20 @@ import (
 	redis "github.com/go-redis/redis/v8"
 )
 
-func incUrlCount(ctx context.Context, rUrl string, conn *redis.Client) string {
-	counter, err := conn.Incr(ctx, rUrl).Result()
+func incURLCount(ctx context.Context, rURL string, conn *redis.Client) string {
+	counter, err := conn.Incr(ctx, rURL).Result()
 	if err != nil {
-		println(err)
+		slog.Error("failed to increment counter", "url", rURL, "err", err)
 	}
 	return strconv.FormatInt(counter, 10)
 }
 
-func getUrlCount(ctx context.Context, rUrl string, conn *redis.Client) string {
-	counter, err := conn.Get(ctx, rUrl).Result()
+func getURLCount(ctx context.Context, rURL string, conn *redis.Client) string {
+	counter, err := conn.Get(ctx, rURL).Result()
 	if err == redis.Nil {
 		counter = "0"
 	} else if err != nil {
-		println("Something went wrong while retrieving the current value", counter, err)
+		slog.Error("failed to get URL count", "url", rURL, "err", err)
 	}
 	return counter
 }
@@ -37,7 +38,7 @@ func getDomainCount(ctx context.Context, domain string, conn *redis.Client) stri
 	var cursor uint64 = 0
 	var err error
 	for {
-		println("Scanning...", cursor, kudos)
+		slog.Debug("scanning", "cursor", cursor, "kudos", kudos)
 		// TODO This matches all of:
 		// * foo-domain
 		// * foo.domain
@@ -56,10 +57,10 @@ func getDomainCount(ctx context.Context, domain string, conn *redis.Client) stri
 					continue
 				}
 			}
-			println("Retrieving individual url", key)
-			urlKudos, error_url_redis := conn.Get(ctx, key).Result()
-			if error_url_redis != nil {
-				println("Could not retrieve key: ", key)
+			slog.Debug("retrieving url", "key", key)
+			urlKudos, err := conn.Get(ctx, key).Result()
+			if err != nil {
+				slog.Warn("could not retrieve key", "key", key, "err", err)
 			}
 			kudosIncr, _ := strconv.ParseInt(urlKudos, 10, 64)
 			kudos += kudosIncr
@@ -81,13 +82,13 @@ func getMetrics(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 	keys, cursor, err = scanRes.Result()
 	for {
 		if err != nil {
-			println("Error during scanning: ", err)
+			slog.Error("scan error", "err", err)
 		}
 		for _, key := range keys {
-			println("Retrieving individual url", key)
-			urlKudos, error_url_redis := conn.Get(ctx, key).Result()
-			if error_url_redis != nil {
-				println("Could not retrieve key: ", key)
+			slog.Debug("retrieving url", "key", key)
+			urlKudos, err := conn.Get(ctx, key).Result()
+			if err != nil {
+				slog.Warn("could not retrieve key", "key", key, "err", err)
 			}
 			u, err := url.Parse(key)
 			domain := ""
@@ -109,21 +110,21 @@ func getClapsHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client)
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancelFunc()
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	rUrl := r.Header.Get("Referrer")
-	count := getUrlCount(ctx, rUrl, conn)
+	rURL := r.Header.Get("Referrer")
+	count := getURLCount(ctx, rURL, conn)
 	w.Write([]byte(count))
 }
 
 func incClapsHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancelFunc()
-	rUrl := r.Header.Get("Referrer")
+	rURL := r.Header.Get("Referrer")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if rUrl == "" {
+	if rURL == "" {
 		http.Error(w, http.StatusText(http.StatusBadRequest), 400)
 		return
 	}
-	kudos := incUrlCount(ctx, rUrl, conn)
+	kudos := incURLCount(ctx, rURL, conn)
 	w.Write([]byte(kudos))
 }
 
@@ -133,9 +134,9 @@ func getKudosHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
 	var count string
-	rUrl := r.URL.Query().Get("url")
-	if rUrl != "" {
-		count = getUrlCount(ctx, rUrl, conn)
+	rURL := r.URL.Query().Get("url")
+	if rURL != "" {
+		count = getURLCount(ctx, rURL, conn)
 	} else {
 		domain := r.URL.Query().Get("domain")
 		count = getDomainCount(ctx, domain, conn)
@@ -146,12 +147,12 @@ func getKudosHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client)
 func incKudosHandler(w http.ResponseWriter, r *http.Request, conn *redis.Client) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancelFunc()
-	rUrl := r.URL.Query().Get("url")
+	rURL := r.URL.Query().Get("url")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if rUrl == "" {
+	if rURL == "" {
 		http.Error(w, http.StatusText(http.StatusBadRequest), 400)
 		return
 	}
-	kudos := incUrlCount(ctx, rUrl, conn)
+	kudos := incURLCount(ctx, rURL, conn)
 	w.Write([]byte(kudos))
 }

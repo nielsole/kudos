@@ -1,50 +1,10 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 const { execSync } = require('child_process');
-const http = require('http');
 
 const TEST_URL = 'e2e-test.example.com/test';
-const PRODUCTION_URL = 'https://kudos.niels-ole.com';
 const BACKEND_URL = 'http://localhost:8082';
 const REDIS_PORT = 6380;
-
-// Forward a proxied HTTP request to the local backend and return the response.
-function httpProxy(method, targetUrl) {
-  return new Promise((resolve, reject) => {
-    const url = new URL(targetUrl);
-    const options = {
-      hostname: url.hostname,
-      port: parseInt(url.port) || 80,
-      path: url.pathname + url.search,
-      method,
-    };
-    const req = http.request(options, (res) => {
-      const chunks = [];
-      res.on('data', (c) => chunks.push(c));
-      res.on('end', () =>
-        resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks) })
-      );
-    });
-    req.on('error', reject);
-    req.end();
-  });
-}
-
-// Intercept requests to the hardcoded production URL and proxy them to the
-// local test backend. Playwright 1.56 does not allow protocol changes in
-// route.continue(), so we proxy manually with route.fulfill().
-async function setupRouteIntercept(page) {
-  await page.route(`${PRODUCTION_URL}/**`, async (route) => {
-    const req = route.request();
-    const targetUrl = req.url().replace(PRODUCTION_URL, BACKEND_URL);
-    try {
-      const res = await httpProxy(req.method(), targetUrl);
-      await route.fulfill({ status: res.status, headers: res.headers, body: res.body });
-    } catch (err) {
-      await route.abort('failed');
-    }
-  });
-}
 
 // Complete a full hover gesture that lasts longer than the widget's duration
 // (100 ms in the fixture) so that kudos are actually given.
@@ -65,7 +25,6 @@ test.describe('Kudos widget – end-to-end', () => {
       );
     } catch (_) {}
 
-    await setupRouteIntercept(page);
     await page.goto('/e2e-fixture.html');
   });
 
@@ -117,7 +76,7 @@ test.describe('Kudos widget – end-to-end', () => {
 
     // Intercept the POST that the widget fires after the gesture completes
     const postPromise = page.waitForRequest(
-      (req) => req.url().includes('kudos.niels-ole.com') && req.method() === 'POST'
+      (req) => req.url().includes('localhost:8082') && req.method() === 'POST'
     );
 
     await kudos.hover();
