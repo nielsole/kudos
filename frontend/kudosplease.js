@@ -15,57 +15,31 @@
 
  KudosPlease = (function() {
 
-  // Detect support for classList and create a inject function to inject a polyfill if needed.
-  // It's faster: http://jsperf.com/use-class-list-with-polyfill
-  var classList = document.documentElement.classList,
-      support = !!classList,
-      inject = function(fname, polyFunc) {
-        return support ? function(e, param) {if (param != '') {return e.classList[fname](param);}} : polyFunc;
-      },
+  /*
+   * Add <CODE>class</CODE> to <CODE>el</CODE>
+   */
+  var addClass = function(el, className) {
+    if (className) el.classList.add(className);
+  },
 
-   /*
-    * Add <CODE>class</CODE> to <CODE>el</CODE>
-    */
-   addClass = inject('add', function(el, classes) {
-     classes = classes.split(',');
+  /*
+   * Remove <CODE>class</CODE> from <CODE>el</CODE>
+   */
+  removeClass = function(el, className) {
+    if (className) el.classList.remove(className);
+  },
 
-     for (var i=0; i < classes.length; i++) {
-       if (el.className.indexOf(classes[i]) == -1) {
-         el.className = el.className.trim() + ' ' + classes[i];
-       }
-     }
-   }),
+  /*
+   * Returns <CODE>true</CODE> if <CODE>el</CODE> has
+   * the <CODE>class</CODE>, <CODE>false</CODE> otherwise
+   */
+  hasClass = function(el, className) {
+    return el.classList.contains(className);
+  },
 
-   /*
-    * Remove <CODE>class</CODE> to <CODE>el</CODE>
-    */
-   removeClass = inject('remove', function(el, classes) {
-     classes = classes.split(',');
-
-     for (var i = 0; i < classes.length; i++) {
-       el.className = el.className.replace(classes[i], '').trim();
-     }
-   }),
-
-   /*
-    * Returns <CODE>true</CODE> if <CODE>el</CODE> has
-    * the <CODE>class</CODE>, <CODE>false</CODE> otherwise
-    */
-   hasClass = inject('contains', function(el, className) {
-     var classes = el.className.split(' '),
-         result = false;
-
-     for (var i = 0; i < classes.length; i++) {
-       if (classes[i] == className) {
-         result = true;
-       }
-     }
-
-     return result;
-   }),
   /*
    * Change the status of the widget and
-   * aply 3 different classes for the icon
+   * apply 3 different classes for the icon
    * in the middle.
    */
   changeStatus = function(el, state, _$) {
@@ -94,7 +68,7 @@
     if (increase) {
       ++amount;
 
-      // Update kudos via ajax
+      // Update kudos via fetch
       request(el, 'POST', _$);
     }
   },
@@ -147,11 +121,7 @@
    * Bind event
    */
   on = function(el, event, func, _$) {
-    try {
-      el.addEventListener(event, function(e) { func(e, el, _$); }, false);
-    } catch(e) {
-      el.attachEvent('on' + event, function(e) { func(e, el, _$); });
-    }
+    el.addEventListener(event, function(e) { func(e, el, _$); }, false);
   },
 
   /*
@@ -180,29 +150,21 @@
     return result;
   },
 
-
   /*
-   * Create a ajax request to a backend
-   * which just keeps track of the kudos counter
-   * via php & mysql
+   * Create a fetch request to the backend to keep track of the kudos counter.
+   * The backend URL is read from the element's data-backend attribute, falling
+   * back to the default hosted instance.
    */
   request = function(el, type, _$) {
-    var xhr;
+    var backendUrl = el.getAttribute('data-backend') || 'https://kudos.niels-ole.com/';
+    var url = backendUrl + '?url=' + encodeURIComponent(el.getAttribute('data-url'));
 
-    // Initialize
-    try {
-     xhr = new ActiveXObject("Microsoft.XMLHTTP");
-    } catch(e) {
-     xhr = new XMLHttpRequest();
-    }
-
-    // Response received
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState == 4 && xhr.status == 200) {
-        var amount = xhr.responseText;
+    fetch(url, { method: type })
+      .then(function(res) { return res.text(); })
+      .then(function(amount) {
         el.setAttribute('data-amount', amount);
 
-        if (type == 'GET') {
+        if (type === 'GET') {
           // Set status based on amount
           changeStatus(el, amount == 0 ? 'alpha' : 'beta', _$);
 
@@ -214,19 +176,13 @@
           }
         }
 
-        if (type == 'POST') {
+        if (type === 'POST') {
           save(el, amount, _$);
         }
-      }
-    };
-
-    var url = "?url="+encodeURIComponent(el.getAttribute('data-url'));
-    // Open request
-    xhr.open(type, "https://kudos.niels-ole.com/" + url, true);
-    xhr.send();
+      });
   };
 
-  /* 
+  /*
    * Constructor
    */
   function KudosPlease(args) {
@@ -250,7 +206,7 @@
       // Identify element
       el.setAttribute('data-id', i);
 
-      // Load kudos via ajax
+      // Load kudos via fetch
       request(el, 'GET', this);
 
       // Amount is 0
@@ -275,11 +231,6 @@
 
     return this;
   }
-
-  // trim polyfill
-  ''.trim || (String.prototype.trim = function(){
-    return this.replace(/^\s+|\s+$/g,'');
-  });
 
   return KudosPlease;
  })();
