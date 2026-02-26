@@ -1,19 +1,48 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 const { execSync } = require('child_process');
+const http = require('http');
 
 const TEST_URL = 'e2e-test.example.com/test';
 const PRODUCTION_URL = 'https://kudos.niels-ole.com';
 const BACKEND_URL = 'http://localhost:8082';
-const REDIS_CONTAINER = 'kudos-e2e-redis';
+const REDIS_PORT = 6380;
 
-// Intercept requests to the hardcoded production URL and redirect to the local
-// test backend. This is the core mechanism that wires the unmodified frontend
-// widget to our isolated test server.
+// Forward a proxied HTTP request to the local backend and return the response.
+function httpProxy(method, targetUrl) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(targetUrl);
+    const options = {
+      hostname: url.hostname,
+      port: parseInt(url.port) || 80,
+      path: url.pathname + url.search,
+      method,
+    };
+    const req = http.request(options, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () =>
+        resolve({ status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks) })
+      );
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+// Intercept requests to the hardcoded production URL and proxy them to the
+// local test backend. Playwright 1.56 does not allow protocol changes in
+// route.continue(), so we proxy manually with route.fulfill().
 async function setupRouteIntercept(page) {
   await page.route(`${PRODUCTION_URL}/**`, async (route) => {
-    const newUrl = route.request().url().replace(PRODUCTION_URL, BACKEND_URL);
-    await route.continue({ url: newUrl });
+    const req = route.request();
+    const targetUrl = req.url().replace(PRODUCTION_URL, BACKEND_URL);
+    try {
+      const res = await httpProxy(req.method(), targetUrl);
+      await route.fulfill({ status: res.status, headers: res.headers, body: res.body });
+    } catch (err) {
+      await route.abort('failed');
+    }
   });
 }
 
@@ -31,7 +60,7 @@ test.describe('Kudos widget – end-to-end', () => {
     // Wipe the test URL's Redis key so each test starts with count = 0
     try {
       execSync(
-        `docker exec ${REDIS_CONTAINER} redis-cli del "${TEST_URL}"`,
+        `redis-cli -p ${REDIS_PORT} del "${TEST_URL}"`,
         { stdio: 'ignore' }
       );
     } catch (_) {}
@@ -142,24 +171,35 @@ test.describe('Kudos widget – end-to-end', () => {
   test('hovering a finished widget applies the CSS scale transform', async ({ page }) => {
     await giveKudos(page);
 
+    // First verify the CSS rule is correctly defined in the loaded stylesheet.
+    // This is a reliable check independent of hover-state timing.
+    const ruleTransform = await page.evaluate(() => {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const rule of sheet.cssRules) {
+            if (rule instanceof CSSStyleRule && rule.selectorText === '.kudos.finish:hover') {
+              return rule.style.transform;
+            }
+          }
+        } catch (_) {}
+      }
+      return null;
+    });
+    expect(ruleTransform).toContain('scale(1.25, 1.25)');
+    expect(ruleTransform).toContain('translateY');
+
+    // Then verify that hovering the finished widget produces the scaled transform.
+    // The .kudos.finish transition for transform is 0.5625s; wait for it to settle.
     const kudos = page.locator('.kudos');
-    // Hover over the now-finished widget
     await kudos.hover();
+    await page.waitForTimeout(700);
 
-    // Wait for the browser to apply the :hover CSS rule
-    const transform = await page.waitForFunction(
-      () => {
-        const el = document.querySelector('.kudos.finish');
-        if (!el) return null;
-        const t = getComputedStyle(el).transform;
-        return t !== 'none' ? t : null;
-      },
-      { timeout: 1000 }
-    );
-
-    const transformValue = await transform.jsonValue();
+    const computedTransform = await page.evaluate(() => {
+      const el = document.querySelector('.kudos.finish');
+      return el ? getComputedStyle(el).transform : 'none';
+    });
     // scale(1.25, 1.25) is represented in a CSS matrix as matrix(1.25, 0, 0, 1.25, ...)
-    expect(transformValue).toMatch(/matrix\(1\.25/);
+    expect(computedTransform).toMatch(/matrix\(1\.25/);
   });
 
   // ------------------------------------------------------------------
